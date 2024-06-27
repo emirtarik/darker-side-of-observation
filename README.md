@@ -42,7 +42,7 @@ To set up the environment to run the project, follow these steps:
    cd darker-side-of-observation
    ```
 
-2. Install the required Python packages:
+2. Install the required Python packages (this step can also be skipped as `master.py` automatically installs all requirements):
    
    ```
    pip install -r requirements.txt
@@ -91,4 +91,4 @@ The findings suggest that active observation leads to more polarized evaluations
 
 ## Acknowledgments
 
-We would like to acknowledge Emir Dakin and Constance Frohly, the main research assistants responsible for the code, methodology, and experiment design, for their significant contributions to this project.
+We would like to acknowledge Constance Frohly and Emir Dakin, the research assistants responsible for the code, methodology, and experiment design, for their significant contributions to this project.
