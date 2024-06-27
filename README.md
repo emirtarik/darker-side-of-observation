@@ -55,10 +55,12 @@ To set up the environment to run the project, follow these steps:
    ```
    {
      "main_path": "/path/to/your/main/directory",
-     "data_path": "/path/to/your/data/directory",
-     "code1_path": "/path/to/your/code1/directory",
-     "code2_path": "/path/to/your/code2/directory",
-     "stata_path": "/path/to/your/stata/executable"
+     "data_path": "~/main/data/analysis",
+     "code1_path": "~/main/code/01_clean",
+     "code2_path": "~/main/code/02_analysis",
+     "stata_path": "/Applications/Stata/StataMP.app/Contents/MacOS/StataMP" 
+     /* stata_path is an example for MacOS using StataMP. 
+     Could also be StataSP if the Standard Edition of Stata is used. */
    }
    ```
 
