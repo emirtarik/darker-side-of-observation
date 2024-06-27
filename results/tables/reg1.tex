@@ -1,0 +1,37 @@
+\begin{table}[htbp]\centering
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\caption{Regression Results}
+\begin{tabular}{l*{4}{c}}
+\hline\hline
+                    &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}&\multicolumn{1}{c}{(3)}&\multicolumn{1}{c}{(4)}\\
+                    &\multicolumn{1}{c}{evaluation}&\multicolumn{1}{c}{evaluation}&\multicolumn{1}{c}{evaluation}&\multicolumn{1}{c}{evaluation}\\
+                    &        b/se   &        b/se   &        b/se   &        b/se   \\
+\hline
+dummy\_oa            &      -0.093   &       0.175   &      -0.060   &       0.120   \\
+                    &     (0.110)   &     (0.230)   &     (0.126)   &     (0.342)   \\
+obskeep             &      -0.988***&      -1.097***&      -0.478***&      -0.425*  \\
+                    &     (0.117)   &     (0.216)   &     (0.129)   &     (0.247)   \\
+dummy\_oa=0          &       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+dummy\_oa=1          &       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+obskeep=0           &       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+obskeep=1           &       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+dummy\_oa=0 $\times$ obskeep=0&       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+dummy\_oa=0 $\times$ obskeep=1&       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+dummy\_oa=1 $\times$ obskeep=0&       0.000   &       0.000   &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   &         (.)   &         (.)   \\
+dummy\_oa=1 $\times$ obskeep=1&       0.495***&      -0.097   &       0.147   &      -1.016*  \\
+                    &     (0.155)   &     (0.334)   &     (0.181)   &     (0.526)   \\
+Constant            &       4.643***&       4.714***&       4.324***&       4.607***\\
+                    &     (0.083)   &     (0.152)   &     (0.091)   &     (0.182)   \\
+\hline
+Observations        &         538   &         119   &         554   &          79   \\
+Adjusted \(R^{2}\)  &       0.152   &       0.279   &       0.031   &       0.116   \\
+\hline\hline
+\end{tabular}
+\end{table}

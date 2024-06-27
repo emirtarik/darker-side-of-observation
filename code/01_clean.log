@@ -1,0 +1,1293 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: Unlimited-user 2-core network, expiring  8 Jun 2024
+Serial number: 501809316934
+  Licensed to: Roberto GALBIATI
+               FNSP
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased; see help
+          set_maxvar.
+
+. do "/Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/code/01_clean/01_c
+> lean.do" 
+
+. 
+. /* =================================*/
+. /*              Clean data                                      */
+. /*              version created 15/09/23        */
+. /* =================================*/
+. 
+. ** define userc
+. 
+. clear all
+
+. 
+. *######### SET GLOBAL USER ##########*
+. 
+. *global user "C:\Users\74749\Dropbox"
+. *global user "/Users/frohlyconstance/Dropbox" //Constance
+. *global user "/Users/emir/Dropbox" //Emir
+. global user "/Users/roberto.galbiati/Dropbox" //roberto.galbiati
+
+. 
+. cd "$user/Norms and reminders/ExpeData/CLEAN/"
+/Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN
+
+. 
+. 
+. /* Paths with backslash 
+> global path "$user\Norms and reminders\ExpeData\CLEAN\"
+> global path_fig "$user\Norms and reminders\ExpeData\CLEAN\results\figures\"
+> global path_tab "$user\Norms and reminders\ExpeData\CLEAN\results\tables\"
+> global path_raw_data "$user\Norms and reminders\ExpeData\CLEAN\data\raw\" 
+> global path_analysis_data "$user\Norms and reminders\ExpeData\CLEAN\data\analysis\" 
+> */
+. 
+. 
+. * paths with forward slash 
+. global path "$user/Norms and reminders/ExpeData/CLEAN/"
+
+. global path_fig "$user/Norms and reminders/ExpeData/CLEAN/results/figures/"
+
+. global path_tab "$user/Norms and reminders/ExpeData/CLEAN/results/tables/"
+
+. global path_raw_data "$user/Norms and reminders/ExpeData/CLEAN/data/raw/" 
+
+. global path_analysis_data "$user/Norms and reminders/ExpeData/CLEAN/data/analysis/" 
+
+. 
+. import excel using "${path_raw_data}raw_data.xlsx", clear  firstrow case(lower)
+(105 vars, 6,297 obs)
+
+. 
+. * Label the variables with the first row of the data
+. qui ds
+
+. local varlist `r(varlist)'
+
+. foreach var of loc varlist {
+  2.         local test= `var'[1]
+  3.         label var `var' "`test'"
+  4. }
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+note: label truncated to 80 characters
+
+. drop if _n==1
+(1 observation deleted)
+
+. 
+. 
+. * For the test : keep if the data was generated on 4/13
+. *keep if  strpos(recordeddate, "4/13/2023 ")>0 | strpos(recordeddate, "4/14/2023 ")>0| st
+> rpos(recordeddate, "4/15/2023 ")>0| strpos(recordeddate, "4/16/2023 ")>0| strpos(recorded
+> date, "4/17/2023 ")>0| strpos(recordeddate, "4/18/2023 ")>0| strpos(recordeddate, "4/19/2
+> 023 ")>0| strpos(recordeddate, "4/20/2023 ")>0| strpos(recordeddate, "4/21/2023 ")>0| str
+> pos(recordeddate, "4/22/2023 ")>0| strpos(recordeddate, "4/23/2023 ")>0| strpos(recordedd
+> ate, "4/24/2023 ")>0
+. 
+. gen recday =  dofc(clock(recordeddate, "MDYhm"))
+
+. format recday %td
+
+. order recday 
+
+. keep if recday >= td(13apr2023) //keep after start of first wave
+(1,190 observations deleted)
+
+. drop if recday >= td(01jul2023) & recday < td(15sep2023) //drop in between wave1 and wave
+> 2
+(109 observations deleted)
+
+. drop recordeddate
+
+. 
+. * Labeling survey waves
+. gen wave = 1 if recday < td(15sep2023)
+(2,949 missing values generated)
+
+. replace wave = 2 if recday >= td(15sep2023)
+(2,949 real changes made)
+
+. 
+. 
+. * Keep only people who finished the survey 
+. destring finished, replace // This is equivalent to progress=="100" 
+finished: contains nonnumeric characters; no replace
+
+. drop progress
+
+. 
+. destring locationlatitude, gen(latitude)
+locationlatitude: all characters numeric; latitude generated as double
+(660 missing values generated)
+
+. destring locationlongitude, gen(longitude)
+locationlongitude: all characters numeric; longitude generated as double
+(660 missing values generated)
+
+. drop location*
+
+. 
+. * Keep only Cint sourced surveys
+. *drop if cintid==""
+. 
+. * Keep only those who accepted to participate in the study
+. gen accept_to_participate=(q12=="J'accepte de participer à cette étude") if q12!=""
+
+. drop q12 
+
+. 
+. * Variables that we won't need:
+. drop *_firstclick
+
+. drop *_pagesubmit
+
+. 
+. * Variables that we might need:
+. drop *_clickcount
+
+. drop *_lastclick
+
+. 
+. * Whether the participant chose to see the information
+. rename inf info
+
+. destring info, replace
+info: all characters numeric; replaced as byte
+
+. 
+. * Whether the participant observed a decision to donate or keep the money
+. gen choice_judged_other = 1 if random=="0" // if random = 0, the observer judges a decisi
+> on to give 100€
+(2,480 missing values generated)
+
+. replace choice_judged_other = 0 if random=="1" // if random = 1, the observer judges a de
+> cision to keep 25€
+(2,480 real changes made)
+
+. drop random 
+
+. 
+. * ID_yapper
+. *rename q51 ID_yapper
+. *destring q51, gen(ID_yapper) force //How many non-numeric observations do we loose by fo
+> rcing it? 
+. 
+. * code_validation: used to donate money on behalf of the participant
+. destring code_validation, replace
+code_validation: all characters numeric; replaced as long
+
+. 
+. * tirage = randomly selected to receive the money
+. gen winning_draw = (tirage=="1")
+
+. drop tirage
+
+. 
+. * Delete for GDPR concerns:
+. drop recipient*
+
+. 
+. * Variables that are not interesting for the test survey:
+. drop status distributionchannel userlanguage ipaddress externalreference // q42 = attenti
+> on check, q62 = attention_check, q83 = accept_to_share_data_donation
+
+. 
+. * Check that the attention checks are satisfied (q42 & q62)
+. gen attention_check=q42
+(1,468 missing values generated)
+
+. replace attention_check=q62 if q42==""
+variable attention_check was str1 now str2
+(1,180 real changes made)
+
+. *encode attention_check, gen(attention_check2) // because of the pilot text answer
+. destring attention_check, replace  // How many obs do we lose with/without  force? None o
+> n 13/04/23
+attention_check: all characters numeric; replaced as byte
+(288 missing values generated)
+
+. drop q42 q62
+
+. 
+. 
+. *gen accept_to_share_data_don = (q83=="Je confirme") if q83!=""
+. *drop q83
+. 
+. gen asso_shown=(strpos(q47, "Oui")>0) if q47!=""
+(3,235 missing values generated)
+
+. replace asso_shown = 1 if strpos(q47, "Oui")>0
+(0 real changes made)
+
+. replace asso_shown = 0 if strpos(q47, "Non")>0
+(0 real changes made)
+
+. gen donation=(strpos(q425, "Renoncer")>0) if q425!="" // equivalent to destring decision_
+> don, replace
+(1,605 missing values generated)
+
+. gen expected_evaluation=q429_1 // was q91_1 before 13/04, now q429_1
+(2,771 missing values generated)
+
+. replace expected_evaluation=q621_1 if expected_evaluation==""  // was q96_1 before 13/04,
+>  now q621_1
+(1,912 real changes made)
+
+. destring expected_evaluation, replace
+expected_evaluation: all characters numeric; replaced as double
+(859 missing values generated)
+
+. destring q430_1, gen(expected_proportion_don)
+q430_1: all characters numeric; expected_proportion_don generated as byte
+(2821 missing values generated)
+
+. replace expected_proportion_don = real(q622_1) if q430_1==""
+(1,885 real changes made)
+
+. gen asso_shown_eval=(strpos(q610, "Oui")>0) if q610!=""
+(4,455 missing values generated)
+
+. replace asso_shown_eval = 1 if strpos(q611, "Oui")>0
+(177 real changes made)
+
+. replace asso_shown_eval = 0 if strpos(q611, "Non")>0
+(249 real changes made)
+
+. destring q619_1, gen(evaluation) // evaluation_other_choice // was q97_1 before 13/04, no
+> w q619_1
+q619_1: all characters numeric; evaluation generated as byte
+(3082 missing values generated)
+
+. 
+. gen asso_shown_combined = asso_shown // create combined shown info variable
+(3,235 missing values generated)
+
+. replace asso_shown_combined = asso_shown_eval if missing(asso_shown_combined) // fill in 
+> for passive observers
+(542 real changes made)
+
+. 
+. *gen asso_shown = rbinomial(1,0.5) // q47
+. *gen donation = rbinomial(1,0.5) // q425
+. *gen expected_evaluation = runiformint(0,5) // q429_1 or q91_1
+. *gen expected_proportion_active = runiform() //q430_1
+. *gen asso_shown_2 = rbinomial(1,0.5) // q610
+. *gen asso_shown_3 = rbinomial(1,0.5) // q611
+. *gen evaluation = runiformint(0,5) //q619_1 or q97_1
+. *gen expected_evaluation_other = runiformint(0,5) // q621_1 or q96_1
+. *gen expected_proportion_passive = runiform() //q622_1
+. 
+. *replace donation=. if game=="3"
+. *cap 
+. 
+. * ! For the actual data: check that there are no duplicates in the ipaddresses
+. 
+. *gen attention_check1=(q42=="5") if q52!=""
+. *gen attention_check2=(q62=="5") if q62!=""
+. *gen asso_shown=(q47=="1") if q47!="" // Dummy variable equal to 1 if the participant cho
+> se to see the ARUP. Related to seen_ARUP.
+. *gen donation=(q425=="0") if q425!=""
+. *destring q526_1, gen(expected_evaluation)
+. destring q430_1, gen(expected_proportion_active)
+q430_1: all characters numeric; expected_proportion_active generated as byte
+(2821 missing values generated)
+
+. *destring q610, gen(evaluation)
+. * gen asso_shown_other=(q610=="1") if q610!="" // q611?
+. destring q621_1, gen(expected_evaluation_other)
+q621_1: all characters numeric; expected_evaluation_other generated as double
+(3085 missing values generated)
+
+. *destring q621_1, gen(expected_proportion_passive) //cf. expected_proportion_passive (old
+>  name)
+. 
+. drop q47 q425 q429_1 q430_1 q610 q611 q619_1 q621_1 q622_1 /*decision_don*/
+
+. 
+. * Destring and drop variables
+. sort responseid
+
+. encode responseid,  gen(ID)
+
+. drop responseid
+
+. 
+. destring q510, gen(age)
+q510: all characters numeric; age generated as byte
+(267 missing values generated)
+
+. drop q510
+
+. 
+. /*
+> gen educ = 1 if q512=="Sans diplôme"
+> replace educ = 2 if q512=="Certificat d'études primaires"
+> replace educ = 3 if q512=="Ancien brevet BEPC"
+> replace educ = 4 if q512=="Brevet d'enseignement professionnel (BEP)"
+> replace educ = 5 if q512=="Certificat d'aptitude professionnelle (CAP)"
+> replace educ = 6 if q512=="BAC d'enseignement technique et professionnel"
+> replace educ = 7 if q512=="BAC d'enseignement général"
+> replace educ = 8 if q512=="BAC +2 (DUT, BTS, D\EUG)"
+> replace educ = 9 if q512=="Diplôme de l'enseignement supérieur (2ème ou 3ème cycles, gran
+> de école)"
+> */
+. * This scale is only valid for the test ! 
+. encode q512, gen(temp)
+
+. gen educ=1 if temp==9
+(4,842 missing values generated)
+
+. replace educ=2 if temp==7
+(26 real changes made)
+
+. replace educ=3 if temp==1
+(121 real changes made)
+
+. replace educ=4 if temp==5
+(298 real changes made)
+
+. replace educ=5 if temp==6
+(278 real changes made)
+
+. replace educ=6 if temp==4
+(571 real changes made)
+
+. replace educ=7 if temp==3
+(613 real changes made)
+
+. replace educ=8 if temp==2
+(1,269 real changes made)
+
+. replace educ=9 if temp==8
+(1,395 real changes made)
+
+. drop q512 temp
+
+. 
+. gen female=(q514=="Femme") if q514=="Femme"|q514=="Homme"
+(292 missing values generated)
+
+. drop q514
+
+. 
+. gen children=(q516=="Oui") if q516!=""
+(280 missing values generated)
+
+. drop q516
+
+. 
+. rename q620 comment 
+
+. 
+. destring q74_14, gen(probability_medecins)
+q74_14: all characters numeric; probability_medecins generated as double
+(1919 missing values generated)
+
+. drop q74_14
+
+. 
+. destring q74_15, gen(probability_ceramique)
+q74_15: all characters numeric; probability_ceramique generated as double
+(1919 missing values generated)
+
+. drop q74_15
+
+. 
+. destring q75_1, gen(ARUP_benevolent)
+q75_1: all characters numeric; ARUP_benevolent generated as byte
+(1924 missing values generated)
+
+. drop q75_1
+
+. 
+. destring q76_2, gen(ARUP_percentage_funding)
+q76_2: all characters numeric; ARUP_percentage_funding generated as byte
+(1925 missing values generated)
+
+. drop q76_2
+
+. 
+. gen income=1 if q77=="Moins de 1000 euros par mois"
+(4,693 missing values generated)
+
+. replace income=2 if q77=="De 1001 à 1500 euros par mois"
+(371 real changes made)
+
+. replace income=3 if q77=="De 1501 à 1750 euros par mois"
+(211 real changes made)
+
+. replace income=4 if q77=="De 1751 à 2000 euros par mois"
+(259 real changes made)
+
+. replace income=5 if q77=="De 2001 à 2500 euros par mois"
+(350 real changes made)
+
+. replace income=6 if q77=="De 2501 à 3000 euros par mois"
+(395 real changes made)
+
+. replace income=7 if q77=="De 3001 à 4000 euros par mois"
+(451 real changes made)
+
+. replace income=8 if q77=="De 4001 à 5000 euros par mois"
+(305 real changes made)
+
+. replace income=9 if q77=="De 5001 à 7000 euros par mois"
+(207 real changes made)
+
+. replace income=10 if q77=="Plus de 7001 euros par mois"
+(114 real changes made)
+
+. replace income=11 if q77=="Ne souhaite pas répondre"
+(102 real changes made)
+
+. drop q77
+
+. 
+. destring q78_1, gen(prev_donation_charity)
+q78_1: all characters numeric; prev_donation_charity generated as byte
+(1931 missing values generated)
+
+. drop q78_1
+
+. 
+. destring q78_2, gen(prev_donation_foreigner)
+q78_2: all characters numeric; prev_donation_foreigner generated as byte
+(1931 missing values generated)
+
+. drop q78_2 
+
+. 
+. destring q78_3, gen(prev_volunteering)
+q78_3: all characters numeric; prev_volunteering generated as byte
+(1931 missing values generated)
+
+. drop q78_3 
+
+. 
+. destring q78_4, gen(prev_blooddonation)
+q78_4: all characters numeric; prev_blooddonation generated as byte
+(1931 missing values generated)
+
+. drop q78_4 
+
+. 
+. gen double starttime = clock(startdate, "DMYhms")
+(4,997 missing values generated)
+
+. format starttime %tc
+
+. 
+. gen double endtime = clock(enddate, "DMYhms")
+(4,997 missing values generated)
+
+. format endtime %tc
+
+. drop startdate enddate
+
+. 
+. gen time = round((endtime-starttime)/60000) // How long does the experiment last
+(4,997 missing values generated)
+
+. 
+. 
+. destring game, replace
+game: all characters numeric; replaced as byte
+
+. 
+. * To reproduce the variable treatment of the first experiment (from 1 to 6), run :
+. gen treatment=2 if game==1
+(3,728 missing values generated)
+
+. replace treatment=3 if game==2
+(1,237 real changes made)
+
+. replace treatment=4 if game==3
+(1,240 real changes made)
+
+. replace treatment=6 if game==4
+(1,251 real changes made)
+
+. cap */
+
+. 
+. * Generate treatment dummies
+. gen dummy_dp = (game==1)
+
+. gen dummy_da = (game==2)
+
+. gen dummy_op = (game==3)
+
+. gen dummy_oa = (game==4)
+
+. 
+. * To use active vs passive dictator game comparisons
+. gen active=1 if game==2 | game==4
+(2,509 missing values generated)
+
+. replace active=0 if game==1 | game==3
+(2,509 real changes made)
+
+. cap */
+
+. 
+. * Get a variable with the duration of the experiment 
+. * ! Issue with the values of the variable durationinseconds
+. *destring durationinseconds, gen(duration_expe)
+. *label var duration_expe "Duration of the experiment in seconds" 
+. * Keep in mind that the individuals could quit and come back to the experiment if they wa
+> nted to 
+. drop  durationinseconds 
+
+. 
+. * Self-esteem variables need to between 0 and 3 and be higher for better self-valuation. 
+> We need to reverse the scale for variables 3, 5, 8, 9 and 10.
+. 
+. * "Je pense que je suis une personne de valeur, au moins égale à n'importe qui d'autre."
+. gen se_value = 0 if q79_1=="Tout à fait en désaccord"
+(4,951 missing values generated)
+
+. replace se_value = 1 if q79_1=="Plutôt en désaccord"
+(156 real changes made)
+
+. replace se_value = 2 if q79_1=="Plutôt en accord"
+(1,677 real changes made)
+
+. replace se_value = 3 if q79_1=="Tout à fait en accord"
+(1,175 real changes made)
+
+. 
+. * "Je pense que je possède un certain nombre de belles qualités"
+. gen se_qualities = 0 if q79_2=="Tout à fait en désaccord"
+(4,972 missing values generated)
+
+. replace se_qualities = 1 if q79_2=="Plutôt en désaccord"
+(145 real changes made)
+
+. replace se_qualities = 2 if q79_2=="Plutôt en accord"
+(1,836 real changes made)
+
+. replace se_qualities = 3 if q79_2=="Tout à fait en accord"
+(1,048 real changes made)
+
+. 
+. * "Tout bien considéré, je suis porté-e à me considérer comme un-e raté-e."
+. gen se_failure = 3 if q79_3=="Tout à fait en désaccord"
+(3,227 missing values generated)
+
+. replace se_failure = 2 if q79_3=="Plutôt en désaccord"
+(892 real changes made)
+
+. replace se_failure = 1 if q79_3=="Plutôt en accord"
+(314 real changes made)
+
+. replace se_failure = 0 if q79_3=="Tout à fait en accord"
+(78 real changes made)
+
+. 
+. * "Je suis capable de faire les choses aussi bien que la majorité des gens."
+. gen se_capable = 0 if q79_4=="Tout à fait en désaccord"
+(4,957 missing values generated)
+
+. replace se_capable = 1 if q79_4=="Plutôt en désaccord"
+(229 real changes made)
+
+. replace se_capable = 2 if q79_4=="Plutôt en accord"
+(1,744 real changes made)
+
+. replace se_capable = 3 if q79_4=="Tout à fait en accord"
+(1,041 real changes made)
+
+. 
+. * "Je sens peu de raisons d'être fier-e de moi."
+. gen se_pride = 3 if q79_5=="Tout à fait en désaccord"
+(3,848 missing values generated)
+
+. replace se_pride = 2 if q79_5=="Plutôt en désaccord"
+(1,100 real changes made)
+
+. replace se_pride = 1 if q79_5=="Plutôt en accord"
+(619 real changes made)
+
+. replace se_pride = 0 if q79_5=="Tout à fait en accord"
+(186 real changes made)
+
+. 
+. * "J'ai une attitude positive vis-à-vis moi-même."
+. gen se_positivity = 0 if q79_6=="Tout à fait en désaccord"
+(4,906 missing values generated)
+
+. replace se_positivity = 1 if q79_6=="Plutôt en désaccord"
+(571 real changes made)
+
+. replace se_positivity = 2 if q79_6=="Plutôt en accord"
+(1,703 real changes made)
+
+. replace se_positivity = 3 if q79_6=="Tout à fait en accord"
+(689 real changes made)
+
+. 
+. * "Dans l'ensemble, je suis satisfait-e de moi."
+. gen se_satisfied = 0 if q79_7=="Tout à fait en désaccord"
+(4,921 missing values generated)
+
+. replace se_satisfied = 1 if q79_7=="Plutôt en désaccord"
+(595 real changes made)
+
+. replace se_satisfied = 2 if q79_7=="Plutôt en accord"
+(1,791 real changes made)
+
+. replace se_satisfied = 3 if q79_7=="Tout à fait en accord"
+(592 real changes made)
+
+. 
+. * "J'aimerais avoir plus de respect pour moi-même."
+. gen se_self_respect = 3 if q79_8=="Tout à fait en désaccord"
+(4,505 missing values generated)
+
+. replace se_self_respect = 2 if q79_8=="Plutôt en désaccord"
+(955 real changes made)
+
+. replace se_self_respect = 1 if q79_8=="Plutôt en accord"
+(1,166 real changes made)
+
+. replace se_self_respect = 0 if q79_8=="Tout à fait en accord"
+(441 real changes made)
+
+. 
+. * "Parfois je me sens vraiment inutile."
+. gen se_uselessness = 3 if q79_9=="Tout à fait en désaccord"
+(3,926 missing values generated)
+
+. replace se_uselessness = 2 if q79_9=="Plutôt en désaccord"
+(1,000 real changes made)
+
+. replace se_uselessness = 1 if q79_9=="Plutôt en accord"
+(766 real changes made)
+
+. replace se_uselessness = 0 if q79_9=="Tout à fait en accord"
+(217 real changes made)
+
+. 
+. * "Il m'arrive de penser que je suis un-e bon-ne à rien."
+. gen se_good_for_nothing = 3 if q79_10=="Tout à fait en désaccord"
+(3,422 missing values generated)
+
+. replace se_good_for_nothing = 2 if q79_10=="Plutôt en désaccord"
+(802 real changes made)
+
+. replace se_good_for_nothing = 1 if q79_10=="Plutôt en accord"
+(532 real changes made)
+
+. replace se_good_for_nothing = 0 if q79_10=="Tout à fait en accord"
+(145 real changes made)
+
+. drop q79*
+
+. 
+. * Destring the variables that store the settings 
+. destring duration, gen(parameter_duration)
+duration: all characters numeric; parameter_duration generated as byte
+
+. destring endowment, gen(parameter_endowment)
+endowment: all characters numeric; parameter_endowment generated as byte
+
+. destring showupfee, gen(parameter_showupfee)
+showupfee: all characters numeric; parameter_showupfee generated as byte
+
+. destring don, gen(parameter_donationamount)
+don: all characters numeric; parameter_donationamount generated as byte
+
+. destring arup1, gen(parameter_arup1)
+arup1: contains nonnumeric characters; no generate
+
+. destring arup2, gen(parameter_arup2)
+arup2: contains nonnumeric characters; no generate
+
+. rename ass_description parameter_arup_desc
+
+. drop duration endowment showupfee don arup1 arup2
+
+. 
+. * The following variables no longer exist in the version from 24/03/2023
+. *destring q21, gen(tester_game)
+. *destring q22, gen(tester_info)
+. *destring q23, gen(tester_win)
+. 
+. 
+. order userid password cintid ID game accept_to_participate /*accept_to_share_data_don*/ a
+> ge educ female children starttime endtime donation expected_evaluation asso_shown info as
+> so_shown_eval evaluation comment   probability_medecins probability_ceramique ARUP_benevo
+> lent ARUP_percentage_funding prev* se_* latitude longitude
+
+. sort treatment
+
+. 
+. 
+. * What's status?
+. * What's the difference between 526_1 and 528_1? I think they're dupplicates
+. * Why do we have both q610 and q611? 
+. * Test for differences across distribution channel, click count, time spent between first
+>  and last click, and maybe across user language. 
+. 
+. * I haven't found the variables that replace the following: (requires the final dataset)
+. *rename blocC_others_choice choice_judged_other
+. *rename got100euros won_prize
+. *rename rosenberg_score rosenberg_score
+. 
+. 
+. * Label variables
+. 
+. label define choice_judged_otherlabel 1 "Give" 0 "Keep"
+
+. label values choice_judged_other choice_judged_otherlabel
+
+. 
+. *label define won_prizelabel 1 "Yes" 0 "No"
+. *label values won_prize won_prizelabel
+. 
+. label define donationlabel 1 "Donated 100€" 0 "Kept 25€"
+
+. label values donation donationlabel
+
+. 
+. label define femalelabel 1 "Female" 0 "Male"
+
+. label values female femalelabel
+
+. 
+. label define childrenlabel 0 "No" 1 "Yes"
+
+. label values children childrenlabel
+
+. 
+. label define educlabel 1 "No degree" 2 "Primary school" 3 "Middle school (former certific
+> ate)" 4 "Post-middle school professional license" 5 "Intermediate vocational certificate"
+>  6 "Vocational high school degree" 7 "High school degree" 8 "Trade school/vocational trai
+> ning diploma" 9 "College degree"
+
+. label values educ educlabel
+
+. 
+. label define incomelabel 1 "< 1000 euros" 2 "1001-1500 euros" 3 "1501-1750 euros" 4 "1751
+> -2000 euros" 5 "2001-2500 euros" 6 "2501-3000 euros" 7 "3001-4000 euros" 8 "4001-5000 eur
+> os" 9 "5001-7000 euros" 10 "> 7001 euros" 11 "Do not wish to answer"
+
+. label values income incomelabel
+
+. 
+. label define treatmentlabel /*1 "D"*/ 2 "D{subscript:p}" 3 "D{subscript:a}" 4 "O{subscrip
+> t:p}"  6 "O{subscript:a}"  
+
+. *label define treatmentlabel 1 "D" 2 "Dp" 3 "Da" 4 "Op"  6 "Oa"  
+. label values treatment treatmentlabel
+
+. 
+. label define activelabel 1 "D{subscript:a} & O{subscript:a}" 0 "D{subscript:p}"
+
+. label values active activelabel
+
+. 
+. label define seen_ARUP 1 "Revealed the ARUP" 0 "Hid the ARUP"
+
+. label values asso_shown seen_ARUP 
+
+. label values asso_shown_combined seen_ARUP
+
+. 
+. label define info 1 "Option to see the ARUP" 0 "No option to see the ARUP"
+
+. label values info info
+
+. 
+. label var time "Time spent on the experiment"
+
+. 
+. * Compute self-esteem scores
+. 
+. gen self_esteem_score = se_value + se_qualities + se_failure + se_capable + se_pride + se
+> _positivity + se_satisfied + se_self_respect + se_uselessness + se_good_for_nothing
+(1,943 missing values generated)
+
+. 
+. * Create notes on the variables
+. 
+. notes: ID "Integer. Unique ID number attributed to each participant"
+
+. notes: time_start "String. Time at which the participant started the survey"
+
+. notes: payoff "Continuous. Final payoff of the participant."
+
+. notes: treatment "Categorical. Treatment, randomly drawn (from 1 to 6)"
+
+. notes: active "Binary. 1 if the treatment is an active game, 0 if not"
+
+. notes: choice_judged_other "Binary. Choice of another player, that the player has to judg
+> e (C1.2)."
+
+. notes: won_prize "Binary. 1 if the player was chosen, 0 if not (E1)."
+
+. notes: donation "Binary, 1 if the player donated the money, 0 if kept it (B1.3)."
+
+. notes: exc_ARUP "Integer. Number of associations the player chose to display."
+
+. notes: asso_shown "String. List of associations that the player saw prior to making their
+>  choice (B1.4)."
+
+. notes: number_asso_shown_other "Integer. Number of associations another player displayed 
+> before making their choice."
+
+. notes: asso_shown_other "String. List of associations that another player saw prior to ma
+> king their choice (C1.2)."
+
+. notes: age "Integer. Age of the player (A2)."
+
+. notes: educ "Categorical. Level of education of the respondent (A3)."
+
+. notes: female "Binary. 0 if the player is a man, 1 if the player is a woman (A4)."
+
+. notes: children "Binary. Equal to 1 if the participant has children, and equal to 0 if th
+> e participant does not have children. Displayed on screen A8."
+
+. notes: expected_evaluation "Continuous (1-5). Belief of the player about other player's j
+> udgement of his action (B2)."
+
+. notes: expected_proportion_active "Continuous (0-100). Player's belief about the percenta
+> ge of other players that made the same choice as them (B3)."
+
+. notes: evaluation "Continuous (1-5). Judgement of the player on another player's action (
+> C1.2)."
+
+. notes: comment "String. Comment left by the player that judged an action. Displayed after
+>  the experiment."
+
+. notes: expected_evaluation_other "Continuous. Player's belief about the evaluation that o
+> ther players made of the choice they judged (C2)."
+
+. notes: expected_proportion_passive "Continuous (0-100). Players belief about the share of
+>  other players that made the same choice (B3)."
+
+. notes: ARUP_benevolent "Level (1-5). How benevolent does the player think ARUP are? (D1.1
+> )."
+
+. notes: ARUP_percentage_funding "Continuous. What percentage of an ARUP's funding does the
+>  player think goes towards their actions (D1.2)."
+
+. notes: probability_ceramique "Continuous (0-100). Player's belief about the probability t
+> hat the ceramics association will receive the donation (D2)."
+
+. notes: probability_medecins "Continuous (0-100). Player's belief about the probability th
+> at Doctors Without Borders will receive the donation (D2)."
+
+. notes: income "Level. Range of the monthly salary of the participant (D3)."
+
+. notes: prev_donation_charity "Level (1-5). How often did the participant give to an ARUP 
+> in the past (D5)."
+
+. notes: prev_donation_foreigner "Level (1-5). How often did the participant give to an ind
+> ividual in need in the past(D5)."
+
+. notes: prev_volunteering "Level (1-5). How often did the participant volunteer in the pas
+> t (D5)."
+
+. notes: prev_blooddonation "Level (1-5). How often did the participant give blood in the p
+> ast (D5)."
+
+. notes: se_value "Level variable. Answer to self-esteem question number 1 (D6)"
+
+. notes: se_qualities "Level variable. Answer to self-esteem question number 2 (D6)"
+
+. notes: se_capable "Level variable. Answer to self-esteem question number 3 (D6)"
+
+. notes: se_positivity "Level variable. Answer to self-esteem question number 4 (D6)"
+
+. notes: se_satisfied "Level variable. Answer to self-esteem question number 5 (D6)"
+
+. notes: se_failure "Level variable. Answer to self-esteem question number 6 (D6)"
+
+. notes: se_pride "Level variable. Answer to self-esteem question number 7 (D6)"
+
+. notes: se_self_respect "Level variable. Answer to self-esteem question number 8 (D6)"
+
+. notes: se_uselessness "Level variable. Answer to self-esteem question number 9 (D6)"
+
+. notes: se_good_for_nothing "Level variable. Answer to self-esteem question number 10 (D6)
+> "
+
+. notes: self_esteem_score "Integer. Self-esteem score, sum of self-esteem questions."
+
+. notes: voted_presidential_elections "Binary variable. Did the participant vote in the las
+> t elections (D7)"
+
+. notes: voted_candidate "Categorical variable. For which candidate did the participant vot
+> e (D8)"
+
+. 
+. 
+. gen income_group=1
+
+. replace income_group=2 if income>3 & income<7
+(1,004 real changes made)
+
+. replace income_group=3 if income>6 & income<11
+(1,077 real changes made)
+
+. 
+. gen high_income=0
+
+. replace high_income=. if income==11
+(102 real changes made, 102 to missing)
+
+. replace high_income=1 if income>5 & income<11
+(1,472 real changes made)
+
+. 
+. /* Replace Income brackets with the center value
+> * Income variable that takes the value of the median of each interval. This accounts for 
+> non-linear income effects
+> replace income=500 if income==1
+> replace income=1250 if income==2
+> replace income=1625 if income==3
+> replace income=1875 if income==4
+> replace income=2250 if income==5
+> replace income=2750 if income==6
+> replace income=3500 if income==7
+> replace income=4500 if income==8
+> replace income=6000 if income==9
+> replace income=10000 if income==10
+> replace income=. if income==11
+> 
+> label define incomelabel2 500 "< 1000 euros" 1250 "1001-1500 euros" 1625 "1501-1750 euros
+> " 1875 "1751-2000 euros" 2250 "2001-2500 euros" 2750 "2501-3000 euros" 3500 "3001-4000 eu
+> ros" 4500 "4001-5000 euros" 6000 "5001-7000 euros" 10000 "> 7001 euros" 
+> label values income incomelabel2
+> 
+> */
+. 
+. ** Label variables
+. 
+. label variable evaluation "Observers' evaluation"
+
+. 
+. label variable  prev_donation_charity "past donation to a charity"
+
+. label variable  prev_donation_foreigner  "past donation"
+
+. label variable  prev_volunteering  "past volunteering"
+
+. label variable prev_blooddonation "past blood donation"
+
+. 
+. 
+. label var treatment "Dictator with a passive/active observer, Passive/Active observer"
+
+. label var choice_judged_other "Donation decision that is observed and judged"
+
+. label var donation "Decision to donate or not"
+
+. label var self_esteem_score "Self esteem score"
+
+. label var ARUP_benevolent "Benevolent ARUP"
+
+. label var ARUP_percentage_funding "ARUP percentage funding"
+
+. 
+. 
+. *** Select observations in scope:
+. 
+. keep if finished=="True" // Do we keep only people who finished the survey?
+(660 observations deleted)
+
+. keep if accept_to_participate==1 // We drop 4 more observations here
+(59 observations deleted)
+
+. drop finished 
+
+. 
+. 
+. preserve
+
+. keep if attention_check==5
+(1,695 observations deleted)
+
+. sort ID
+
+. save "${path_analysis_data}analysis_to_python.dta", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/data/analysis/analysis_to_python.dta saved
+
+. restore
+
+. 
+. 
+. 
+. 
+. 
+. 
+. ***** THE REST OF THIS DO FILE WAS FOR CONDUCTING PAYMENT PROCEDURES TO PARTICIPANTS ****
+> *
+. 
+. 
+. // * Generate the mean evaluation by group 
+. //
+. // * Moderate : identify insulting comments here // we can't drop any observation though 
+> because we need to fill them up
+. // gen moderated = (comment=="Felis purus eget suspendisse! Massa scelerisque urna. Sapie
+> n ut, volutpat eros augue.")
+. // replace moderated = 1 if comment=="Il aurait pu déduire les 100 de donation pour ces i
+> mpots " |comment=="14"|comment=="1" |comment=="Les informations données sont claires; si 
+> vous êtes tiŕé au sort donc reconnu comme gagnant, vous avez 2 possibilités:soit vous rec
+> evez 25 euros soit 100 euros sont versés, en votre nom, à une association d'utilité oubli
+> que. En renonçant à votre don, le don de 100euros est donc réalisé à l'association à votr
+> e nom." |comment=="C'est mon choix parce qu'a l'heure actuelle, l'argent est très importa
+> nt. Désolé"|comment=="Je serai heureuse de pouvoir donner mon avis, merci "|comment=="Toi
+>  aussi !"
+. // replace moderated=1 if attention_check!=5
+. //
+. // replace comment = "C'est légitime de vouloir conserver cette somme" if comment=="C'est
+>  légitime de vouloir conserver cette femme "
+. //
+. // replace comment= "Ce participant n'a pas ajouté de commentaire écrit." if comment==""
+. //
+. // sort ID
+. //
+. // gen mean_evaluation=.
+. // gen comment1=""
+. // gen comment2=""
+. // gen comment3=""
+. //
+. // levels ID if game!=3, local(ID_list)
+. // foreach id in `ID_list' {
+. //      
+. //      *local id = 2
+. // di "`id'"
+. //
+. //      sort ID
+. //      set seed `id'
+. //      gen random = runiform()
+. //
+. // gen id=(ID==`id')
+. // gsort -id // bring the observation of interest in the first row for the if conditions 
+> below to work correctly
+. //
+. //      if game==1 & donation==1 & info==1 {
+. //              replace random=. if game!=3 | choice !=1 | info!=1 | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //
+. //      if game==1 & donation==0 & info==1 {
+. //              replace random=. if game!=3 | choice !=0 | info!=1 | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //
+. //      if game==1 & donation==1 & info==0 {
+. //              replace random=. if game!=3 | choice !=1 | info!=0 | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //
+. //      if game==1 & donation==0 & info==0 {
+. //              replace random=. if game!=3 | choice !=0 | info!=0 | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //      
+. //      if (game==2|game==4) & donation==1 & info==1 {
+. //              replace random=. if game!=4 | choice !=1 | info!=1 | ID==`id' | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //
+. //      if (game==2|game==4) & donation==0 & info==1 {
+. //              replace random=. if game!=4 | choice !=0 | info!=1 | ID==`id' | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //
+. //      if (game==2|game==4) & donation==1 & info==0 {
+. //              replace random=. if game!=4 | choice !=1 | info!=0 | ID==`id' | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //
+. //      if (game==2|game==4) & donation==0 & info==0 {
+. //              replace random=. if game!=4 | choice !=0 | info!=0 | ID==`id' | mod==1
+. //              sort random
+. //              su evaluation if _n<=3
+. //              replace mean_evaluation=`r(mean)' if ID==`id'
+. //              
+. //              replace comment1 = comment[1] if ID==`id'
+. //              replace comment2 = comment[2] if ID==`id'
+. //              replace comment3 = comment[3] if ID==`id'
+. //      }
+. //      
+. //      drop random 
+. //      drop id
+. // }
+. //
+. // sort game ID
+. //
+. // /* OLD
+. // su evaluation if game==3 & choice==1 & info==1
+. // gen mean_evaluation = `r(mean)' if game==1 & donation==1 & info==1
+. // su evaluation if game==3 & choice==0 & info==1
+. // replace mean_evaluation = `r(mean)' if game==1 & donation==0 & info==1
+. // su evaluation if game==4 & choice==1 & info==1 // Enlever le jugement de cette personn
+> e
+. // replace mean_evaluation = `r(mean)' if (game==2 | game==4) & donation==1 & info==1
+. // su evaluation if game==4 & choice==0 & info==1
+. // replace mean_evaluation = `r(mean)' if (game==2 | game==4) & donation==0 & info==1
+. //
+. // su evaluation if game==3 & choice==1 & info==0
+. // replace mean_evaluation = `r(mean)' if game==1 & donation==1 & info==0
+. // su evaluation if game==3 & choice==0 & info==0
+. // replace mean_evaluation = `r(mean)' if game==1 & donation==0 & info==0
+. // su evaluation if game==4 & choice==1 & info==0
+. // replace mean_evaluation = `r(mean)' if (game==2 | game==4) & donation==1 & info==0
+. // su evaluation if game==4 & choice==0 & info==0
+. // replace mean_evaluation = `r(mean)' if (game==2 | game==4) & donation==0 & info==0
+. // */
+. //
+. // * Compute the bonuses as per the chemin de fer
+. // set seed 1234
+. // gen random1 = runiform(0,100)
+. // gen bonus_probabilityMSF = (probability_medecins > random1)
+. //
+. // gen random2 = runiform(0,16)
+. // gen distance = (expected_evaluation - mean_evaluation)^2
+. // gen bonus_evaluation = (random2 > distance)
+. //
+. // gen attention_check_dummy = (attention_check==5)
+. //
+. // gen bonus_fixe = parameter_showupfee * attention_check_dummy
+. //
+. // * Generate the variable with the amount that the participant will receive in the end
+. // gen bonus_variable =  (parameter_endowment*(1 - donation)*winning_draw*attention_check
+> _dummy) + bonus_probabilityMSF*attention_check_dummy + bonus_evaluation*attention_check_d
+> ummy
+. // replace bonus_variable = bonus_probabilityMSF*attention_check_dummy if bonus_variable=
+> =. // because the passive observers have missing values in donation since they weren't of
+> fered the choice to keep or donate
+. //
+. // drop random1 random2 distance parameter_showupfee
+. //
+. // count if winning_draw==1
+. // local n_winningdraw = `r(N)'
+. // ta winning_draw
+. // di round(`n_winningdraw'/`r(N)',0.01)
+. // *assert round(`n_winningdraw'/`r(N)', 0.01) == 0.05  // should = 1/20
+. // *su donation accept_to_share_data_don
+. // *assert `r(mean)'==1
+. //
+. // *gen MSF = donation * winning_draw * 100 * (attention_check_dummy)
+. //
+. // label var attention_check_dummy "Passed the attention check"
+. //
+. //
+. // * Generate the data for FF
+. // export excel userid password cintid /*ID_yapper*/ game code_validation donation decisi
+> on_don winning_draw bonus_probabilityMSF bonus_evaluation /*MSF accept_to_share_data_don*
+> / attention_check_dummy mean_evaluation comment1 comment2 comment3 if wave==2 ///
+. //  using "${path_data}soself_FF_payment" ///
+. // , firstrow(variables) replace 
+. //
+. // ta recday
+. // ta recday if attention_check==5
+. //
+. // ta winning_draw if attention_check==5
+. //
+. // ta decision_don
+. // ta decision_don if winning_draw==1
+. //
+. // ta game
+. //
+. // ta info
+. // ta asso_shown if info==1
+. // ta asso_shown_eval if info==1
+. 
+. 
+. 
+. 
+. 
+. 
+end of do-file

@@ -1,0 +1,1402 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: Unlimited-user 2-core network, expiring  8 Jun 2024
+Serial number: 501809316934
+  Licensed to: Roberto GALBIATI
+               FNSP
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased; see help
+          set_maxvar.
+
+. do "/Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/code/02_analysis/0
+> 2_analysis.do" 
+
+. 
+. /* ================================= */
+. /*              Analyze data                             */
+. /*              version created 12/03/24         */
+. /* ================================= */
+. 
+. 
+. /** Run to access the color palette available
+> cap ssc install full_palette // install package to see the full colour palette if needed
+> preserve
+> clear*
+> full_palette
+> restore
+> */
+. 
+. 
+. clear all
+
+. ********************************************************************************
+. **** Set relative paths
+. 
+. **** Define user
+. *global user "C:\Users\74749\Dropbox" //Emeric?
+. global user "/Users/roberto.galbiati/Dropbox" //RG
+
+. *global user "/Users/emir/Dropbox" //Emir
+. *cd "$user/Norms and reminders/ExpeData/CLEAN/"
+. 
+. **** Define paths (dependent on forward or backward slash)
+. 
+. /* Paths with backslash 
+> global path "$user\Norms and reminders\ExpeData\CLEAN\"
+> global path_fig "$user\Norms and reminders\ExpeData\CLEAN\results\figures\"
+> global path_tab "$user\Norms and reminders\ExpeData\CLEAN\results\tables\"
+> global path_raw_data "$user\Norms and reminders\ExpeData\CLEAN\data\raw\" 
+> global path_analysis_data "$user\Norms and reminders\ExpeData\CLEAN\data\analysis\" 
+> */
+. 
+. * Paths with forward slash 
+. global path "$user/Norms and reminders/ExpeData/CLEAN/"
+
+. global path_fig "$user/Norms and reminders/ExpeData/CLEAN/results/figures/"
+
+. global path_tab "$user/Norms and reminders/ExpeData/CLEAN/results/tables/"
+
+. global path_raw_data "$user/Norms and reminders/ExpeData/CLEAN/data/raw/" 
+
+. global path_analysis_data "$user/Norms and reminders/ExpeData/CLEAN/data/analysis/" 
+
+. 
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. **** Set macros 
+. 
+. global pre_treatment_vars age i.educ i.female i.children i.income  
+
+. 
+. global post_treatment_exogenous i.prev_donation_charity i.prev_donation_foreigner i.prev_
+> volunteering i.prev_blooddonation self_esteem_score probability_medecins i.ARUP_benevolen
+> t ARUP_percentage_funding
+
+.   
+. global se_vars se_value se_qualities se_failure se_capable se_pride se_positivity se_sati
+> sfied se_self_respect se_uselessness se_good_for_nothing
+
+.   
+. ********************************************************************************
+. **** Import the dataset
+. 
+. * Latest version:
+. use "${path_analysis_data}analysis.dta", clear
+
+. 
+. 
+. 
+. * Label variables
+. 
+. label define choice_judged_otherlabel 1 "Give" 0 "Keep"
+
+. label values choice_judged_other choice_judged_otherlabel
+
+. 
+. *label define won_prizelabel 1 "Yes" 0 "No"
+. *label values won_prize won_prizelabel
+. 
+. label define donationlabel 1 "Donated 100€" 0 "Kept 25€"
+
+. label values donation donationlabel
+
+. 
+. label define femalelabel 1 "Female" 0 "Male"
+
+. label values female femalelabel
+
+. 
+. label define childrenlabel 0 "No" 1 "Yes"
+
+. label values children childrenlabel
+
+. 
+. label define educlabel 1 "No degree" 2 "Primary school" 3 "Middle school (former certific
+> ate)" 4 "Post-middle school professional license" 5 "Intermediate vocational certificate"
+>  6 "Vocational high school degree" 7 "High school degree" 8 "Trade school/vocational trai
+> ning diploma" 9 "College degree"
+
+. label values educ educlabel
+
+. 
+. label define incomelabel 1 "< 1000 euros" 2 "1001-1500 euros" 3 "1501-1750 euros" 4 "1751
+> -2000 euros" 5 "2001-2500 euros" 6 "2501-3000 euros" 7 "3001-4000 euros" 8 "4001-5000 eur
+> os" 9 "5001-7000 euros" 10 "> 7001 euros" 11 "Do not wish to answer"
+
+. label values income incomelabel
+
+. 
+. label define treatmentlabel /*1 "D"*/ 2 "D{subscript:p}" 3 "D{subscript:a}" 4 "O{subscrip
+> t:p}"  6 "O{subscript:a}"  
+
+. *label define treatmentlabel 1 "D" 2 "Dp" 3 "Da" 4 "Op"  6 "Oa"  
+. label values treatment treatmentlabel
+
+. 
+. label define activelabel 1 "D{subscript:a} & O{subscript:a}" 0 "D{subscript:p}"
+
+. label values active activelabel
+
+. 
+. label define seen_ARUP 1 "Revealed the ARUP" 0 "Hid the ARUP"
+
+. label values asso_shown seen_ARUP 
+
+. label values asso_shown_combined seen_ARUP
+
+. label values asso_shown_eval seen_ARUP
+
+. 
+. label define info 1 "Option to see the ARUP" 0 "No option to see the ARUP"
+
+. label values info info
+
+. 
+. label var time "Time spent on the experiment"
+
+. 
+. *labeling predicted donations
+. label define pred_donationlabel 1 "P.Donated 100€" 0 "P.Kept 25€"
+
+. label values LLpred_donation pred_donationlabel
+
+. label values LRpred_donation pred_donationlabel
+
+. label values LPMpred_donation pred_donationlabel
+
+. label values Gpred_donation pred_donationlabel
+
+. label values LLpred_donation_allwithnoinfo pred_donationlabel
+
+. label values LRpred_donation_allwithnoinfo pred_donationlabel
+
+. label values LPMpred_donation_allwithnoinfo pred_donationlabel
+
+. label values Gpred_donation_allwithnoinfo pred_donationlabel
+
+. label values LLpred_donation_allwithinfo pred_donationlabel
+
+. label values LRpred_donation_allwithinfo pred_donationlabel
+
+. label values LPMpred_donation_allwithinfo pred_donationlabel
+
+. label values Gpred_donation_allwithinfo pred_donationlabel
+
+. 
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. **** REGRESSIONS 
+. ********************************************************************************
+. 
+. generate keep = (donation == 0 | Gpred_donation == 0) if inlist(treatment, 4, 6)
+(1,293 missing values generated)
+
+. generate obskeep = (choice_judged_other == 0) if inlist(treatment, 4, 6)
+(1,293 missing values generated)
+
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. * Regression 1 - Evaluation on the interaction between Oa and ObsKeep - DiD
+. eststo clear
+
+. 
+. reg evaluation dummy_oa obskeep dummy_oa##obskeep if info == 1 & keep == 1
+note: 1.dummy_oa omitted because of collinearity.
+note: 1.obskeep omitted because of collinearity.
+
+      Source |       SS           df       MS      Number of obs   =       538
+-------------+----------------------------------   F(3, 534)       =     33.06
+       Model |  78.0079188         3  26.0026396   Prob > F        =    0.0000
+    Residual |   419.94933       534  .786421967   R-squared       =    0.1567
+-------------+----------------------------------   Adj R-squared   =    0.1519
+       Total |  497.957249       537  .927294691   Root MSE        =     .8868
+
+----------------------------------------------------------------------------------
+      evaluation | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+        dummy_oa |  -.0931427   .1100748    -0.85   0.398    -.3093753      .12309
+         obskeep |  -.9883058    .116696    -8.47   0.000    -1.217545   -.7590664
+      1.dummy_oa |          0  (omitted)
+       1.obskeep |          0  (omitted)
+                 |
+dummy_oa#obskeep |
+            1 1  |   .4949323   .1545099     3.20   0.001     .1914106    .7984541
+                 |
+           _cons |   4.643478   .0826949    56.15   0.000     4.481031    4.805926
+----------------------------------------------------------------------------------
+
+. eststo model1
+
+. 
+. reg evaluation dummy_oa obskeep dummy_oa##obskeep if info == 1 & keep == 0
+note: 1.dummy_oa omitted because of collinearity.
+note: 1.obskeep omitted because of collinearity.
+
+      Source |       SS           df       MS      Number of obs   =       119
+-------------+----------------------------------   F(3, 115)       =     16.22
+       Model |  39.2242723         3  13.0747574   Prob > F        =    0.0000
+    Residual |  92.7085008       115  .806160876   R-squared       =    0.2973
+-------------+----------------------------------   Adj R-squared   =    0.2790
+       Total |  131.932773       118  1.11807435   Root MSE        =    .89786
+
+----------------------------------------------------------------------------------
+      evaluation | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+        dummy_oa |   .1746032   .2299804     0.76   0.449    -.2809437    .6301501
+         obskeep |  -1.096639   .2162031    -5.07   0.000    -1.524895   -.6683819
+      1.dummy_oa |          0  (omitted)
+       1.obskeep |          0  (omitted)
+                 |
+dummy_oa#obskeep |
+            1 1  |  -.0965981   .3341438    -0.29   0.773    -.7584726    .5652765
+                 |
+           _cons |   4.714286   .1517668    31.06   0.000     4.413665    5.014907
+----------------------------------------------------------------------------------
+
+. eststo model2
+
+. 
+. esttab model1 model2 using "${path_tab}reg1a.tex", replace ar2 label ///
+>     main(varlabels("Evaluation" "Dummy \$O_a$" "Obskeep" "Dummy \$O_a$ * Obskeep")) ///
+>     cells(b(fmt(3) star) se(fmt(3) par)) ///
+>     title("Regression Results") ///
+>         starlevels(* 0.1 ** 0.05 *** 0.01)
+(output written to /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/resul
+> ts/tables/reg1a.tex)
+
+. ********************************************************************************
+. eststo clear
+
+. 
+. reg evaluation dummy_oa obskeep dummy_oa##obskeep if info == 0 & keep == 1
+note: 1.dummy_oa omitted because of collinearity.
+note: 1.obskeep omitted because of collinearity.
+
+      Source |       SS           df       MS      Number of obs   =       554
+-------------+----------------------------------   F(3, 550)       =      6.88
+       Model |  23.2890487         3  7.76301623   Prob > F        =    0.0001
+    Residual |  620.640554       550  1.12843737   R-squared       =    0.0362
+-------------+----------------------------------   Adj R-squared   =    0.0309
+       Total |  643.929603       553  1.16442966   Root MSE        =    1.0623
+
+----------------------------------------------------------------------------------
+      evaluation | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+        dummy_oa |  -.0600159   .1261821    -0.48   0.635    -.3078736    .1878418
+         obskeep |  -.4779412   .1288203    -3.71   0.000    -.7309811   -.2249012
+      1.dummy_oa |          0  (omitted)
+       1.obskeep |          0  (omitted)
+                 |
+dummy_oa#obskeep |
+            1 1  |   .1472635   .1806666     0.82   0.415    -.2076175    .5021444
+                 |
+           _cons |   4.323529   .0910897    47.46   0.000     4.144603    4.502456
+----------------------------------------------------------------------------------
+
+. eststo model3
+
+. 
+. reg evaluation dummy_oa obskeep dummy_oa##obskeep if info == 0 & keep == 0
+note: 1.dummy_oa omitted because of collinearity.
+note: 1.obskeep omitted because of collinearity.
+
+      Source |       SS           df       MS      Number of obs   =        79
+-------------+----------------------------------   F(3, 75)        =      4.42
+       Model |   12.244986         3  4.08166201   Prob > F        =    0.0064
+    Residual |  69.1980519        75  .922640693   R-squared       =    0.1504
+-------------+----------------------------------   Adj R-squared   =    0.1164
+       Total |   81.443038        78  1.04414151   Root MSE        =    .96054
+
+----------------------------------------------------------------------------------
+      evaluation | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+        dummy_oa |   .1201299   .3418009     0.35   0.726    -.5607725    .8010323
+         obskeep |  -.4253247      .2468    -1.72   0.089    -.9169756    .0663262
+      1.dummy_oa |          0  (omitted)
+       1.obskeep |          0  (omitted)
+                 |
+dummy_oa#obskeep |
+            1 1  |  -1.016234   .5259206    -1.93   0.057    -2.063921    .0314538
+                 |
+           _cons |   4.607143   .1815254    25.38   0.000     4.245526     4.96876
+----------------------------------------------------------------------------------
+
+. eststo model4
+
+. 
+. esttab model3 model4 using "${path_tab}reg1b.tex", replace ar2 label ///
+>     main(varlabels("Evaluation" "Dummy \$O_a$" "Obskeep" "Dummy \$O_a$ * Obskeep")) ///
+>     cells(b(fmt(3) star) se(fmt(3) par)) ///
+>     title("Regression Results") ///
+>         starlevels(* 0.1 ** 0.05 *** 0.01)
+(output written to /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/resul
+> ts/tables/reg1b.tex)
+
+. 
+. 
+. ********************************************************************************
+. **** TABLES 
+. ********************************************************************************
+. 
+. 
+. ********************************************************************************
+. * Table 1 - Descriptive statistics
+. est clear
+
+. estpost tabstat age educ female children income, c(stat) stat(mean sd) by(game) 
+
+Summary statistics: mean sd
+     for variables: age educ female children income
+  by categories of: game
+
+        game |   e(mean)      e(sd) 
+-------------+----------------------
+1            |                      
+         age |  39.97519   12.32956 
+        educ |  7.390698   1.937511 
+      female |  .5984496   .4905923 
+    children |  .5984496   .4905923 
+      income |  5.586047   2.881854 
+-------------+----------------------
+2            |                      
+         age |  40.29784   12.41711 
+        educ |  7.438272   1.757092 
+      female |  .6485226   .4778034 
+    children |  .6296296   .4832769 
+      income |  5.236111   2.682842 
+-------------+----------------------
+3            |                      
+         age |  40.00474   12.73929 
+        educ |  7.368088   1.805948 
+      female |  .6176935   .4863352 
+    children |  .6271722   .4839393 
+      income |  5.600316   2.723515 
+-------------+----------------------
+4            |                      
+         age |  40.25266   12.58932 
+        educ |  7.414003   1.889231 
+      female |  .5932722   .4915993 
+    children |  .6377473   .4810175 
+      income |  5.528158   2.765127 
+-------------+----------------------
+Total        |                      
+         age |  40.13395   12.51254 
+        educ |   7.40302   1.848174 
+      female |  .6143689   .4868386 
+    children |  .6233062   .4846509 
+      income |  5.487031   2.766774 
+
+. esttab using "${path_tab}table1.tex", replace ////
+>  cells("mean(fmt(%8.2fc))" "sd(par)") nostar unstack nonumber ///
+>   compress nonote noobs gap booktabs   ///
+>    collabels(none) ///
+>    eqlabels("\$D_p$" "\$D_a$" "\$O_p$" "\$O_a$") /// 
+>    nomtitles
+(output written to /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/resul
+> ts/tables/table1.tex)
+
+. 
+. 
+.    
+.    
+.    
+. ********************************************************************************
+. **** GRAPHS 
+. ********************************************************************************
+. 
+. 
+. ********************************************************************************
+. * Figure 1 - Evaluations by keep or give
+. 
+. cibar evaluation if treatment==4 | treatment==6, over1(treatment) over2(choice_judged_oth
+> er) over3(info) barcol(eltblue emidblue) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(2 5)) ylabel(2 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation"))
+
+. graph export  "${path_fig}figure1.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/figure1.pdf saved as PDF format
+
+. ********************************************************************************
+. 
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. * Figure 2 - Real evaluations vs predicted evaluations / info vs no info
+. 
+. * Figure 1A - Logit Lasso Predictions
+. * without INFO
+. cibar evaluation if treatment==6 & info==0, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_a_l.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_a_l.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==0, over1(LLpred_donation) over2(choice_judged_ot
+> her) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: L
+> L pred share")) 
+
+. graph save "${path_fig}predicted_a_1.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_a_1.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_a_l.gph" "${path_fig}predicted_a_1.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel A.1 - Logit Lasso (0.666 accuracy), no info treatment
+> ", size(medlarge))*/ graphregion(margin(zero))                
+
+.    graph export  "${path_fig}fig1_appendix_LL_info.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_LL_info.pdf saved as PDF
+    format
+
+. 
+. * with INFO
+. cibar evaluation if treatment==6 & info==1, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_a_2.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_a_2.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==1, over1(LLpred_donation) over2(choice_judged_ot
+> her) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: L
+> L pred share")) 
+
+. graph save "${path_fig}predicted_a_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_a_2.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_a_2.gph" "${path_fig}predicted_a_2.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel A.2 - Logit Lasso (0.549 accuracy), info treatment", 
+> size(medlarge))*/ graphregion(margin(zero))           
+
+.    graph export  "${path_fig}fig1_appendix_LL_info.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_LL_info.pdf saved as PDF
+    format
+
+.   
+. 
+. 
+. * Figure 1 - Logit Ridge Predictions
+. * without INFO
+. cibar evaluation if treatment==6 & info==0, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_b_l.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_b_l.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==0, over1(LRpred_donation) over2(choice_judged_ot
+> her) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: L
+> R pred share")) 
+
+. graph save "${path_fig}predicted_b_1.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_b_1.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_b_l.gph" "${path_fig}predicted_b_1.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel B.1 - Logit Ridge (0.700 accuracy), no info treatment
+> ", size(medlarge))*/ graphregion(margin(zero))                
+
+.    graph export  "${path_fig}fig1.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1.pdf saved as PDF format
+
+. 
+. * with INFO
+. cibar evaluation if treatment==6 & info==1, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_b_2.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_b_2.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==1, over1(LRpred_donation) over2(choice_judged_ot
+> her) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: L
+> R pred share")) 
+
+. graph save "${path_fig}predicted_b_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_b_2.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_b_2.gph" "${path_fig}predicted_b_2.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel B.2 - Logit Ridge (0.662 accuracy), info treatment", 
+> size(medlarge))*/ graphregion(margin(zero))           
+
+.    graph export  "${path_fig}fig1_appendix_LR_info.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_LR_info.pdf saved as PDF
+    format
+
+. 
+. 
+.    
+. * Figure 1B - LPM Predictions
+. * without INFO
+. cibar evaluation if treatment==6 & info==0, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_c_l.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_c_l.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==0, over1(LPMpred_donation) over2(choice_judged_o
+> ther) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: L
+> PM pred share")) 
+
+. graph save "${path_fig}predicted_c_1.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_c_1.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_c_l.gph" "${path_fig}predicted_c_1.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel C.1 - LPM (0.733 accuracy), no info treatment", size(
+> medlarge))*/ graphregion(margin(zero))                
+
+.    graph export  "${path_fig}fig1_appendix_LPM_noinfo.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_LPM_noinfo.pdf saved as PDF
+    format
+
+. 
+. * with INFO
+. cibar evaluation if treatment==6 & info==1, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_c_2.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_c_2.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==1, over1(LPMpred_donation) over2(choice_judged_o
+> ther) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: L
+> PM pred share")) 
+
+. graph save "${path_fig}predicted_c_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_c_2.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_c_2.gph" "${path_fig}predicted_c_2.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel C.2 - LPM (0.662 accuracy), info treatment", size(med
+> large))*/ graphregion(margin(zero))           
+
+.    graph export  "${path_fig}fig1_appendix_LPM_info.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_LPM_info.pdf saved as PDF
+    format
+
+.    
+.    
+.    
+. * Figure 1C - Gaussian NB Predictions
+. * without INFO
+. cibar evaluation if treatment==6 & info==0, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_d_l.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_d_l.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==0, over1(Gpred_donation) over2(choice_judged_oth
+> er) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: G
+> aussian NB pred share")) 
+
+. graph save "${path_fig}predicted_d_1.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_d_1.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_d_l.gph" "${path_fig}predicted_d_1.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel C.1 - Gaussian NB (0.633 accuracy), no info treatment
+> ", size(medlarge))*/ graphregion(margin(zero))                
+
+.    graph export  "${path_fig}fig1_appendix_GNB_noinfo.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_GNB_noinfo.pdf saved as PDF
+    format
+
+. 
+. * with INFO
+. cibar evaluation if treatment==6 & info==1, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_d_2.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_d_2.gph saved
+
+.  
+. cibar evaluation if treatment==4 & info==1, over1(LPMpred_donation) over2(choice_judged_o
+> ther) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Passive observers: G
+> aussian NB pred share")) 
+
+. graph save "${path_fig}predicted_d_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_d_2.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_d_2.gph" "${path_fig}predicted_d_2.gph", graphregion(c
+> olor(white)) ycommon /*title("Panel C.2 - Gaussian NB (0.676 accuracy), info treatment", 
+> size(medlarge))*/ graphregion(margin(zero))           
+
+.    graph export  "${path_fig}fig1_appendix_GNB_info.pdf", replace  
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig1_appendix_GNB_info.pdf saved as PDF
+    format
+
+. ********************************************************************************
+. * Figure 2C.1 - Cumulative dist
+. cumul evaluation if treatment==4, gen(c_t4)
+
+. cumul evaluation if treatment==6, gen(c_t6)
+
+. 
+. twoway (line c_t4 evaluation, sort lcolor(blue) lpattern(dash)) ///
+>        (line c_t6 evaluation, sort lcolor(red)), ///
+>        legend(label(1 "O{subscript:p}") label(2 "O{subscript:a}")) ///
+>            ytitle("CDF of evaluation") xtitle("Evaluations")
+
+. graph export "${path_fig}figure2_cumul.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/figure2_cumul.pdf saved as PDF format
+
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. * Figure 2 - Information revealed by dictators
+. cibar asso_shown_combined if treatment<4, over1(donation) over2(treatment)  barcol(eltblu
+> e emidblue)  bargap(10) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(0 1)) ylabel(0 (0.2) 1) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Information revealed"))  
+
+.         graph export  "${path_fig}figure2.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/figure2.pdf saved as PDF format
+
+. 
+.         
+. * Figure 2B - Information revealed by observers
+. cibar asso_shown_combined if treatment>3, over1(treatment)  barcol(olive_teal eltgreen)  
+> bargap(10) ///
+> graphopts(graphregion(fcolor(white)) text( .79 1.6  "`=ustrunescape("\u23AB")'" "`=ustrun
+> escape("\u23AA")'"  "`=ustrunescape("\u23AA")'"    "`=ustrunescape("\u23AC")'" "`=ustrune
+> scape("\u23AA")'" "`=ustrunescape("\u23AA")'"   "`=ustrunescape("\u23AD")'" , /// 
+> size(vhuge) orientation(vertical))  text(0.81 1.6 "***", size(big)) ysc(range(0 0.8)) yla
+> bel(0 (0.1) 0.8) legend(cols(1) pos(5) ring(0) region(lcolor(black))) ytitle("Information
+>  revealed"))  
+(note:  named style big not found in class gsize, default attributes used)
+
+.         graph export  "${path_fig}fig2.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig2.pdf saved as PDF format
+
+. ********************************************************************************
+. 
+. 
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. * Figure 3
+. 
+. * Figure 3A - Access to info before evaluating by donation
+. cibar asso_shown_eval if treatment==6, over1(donation)  barcol(sienna stone)  bargap(10) 
+> ///
+> graphopts(graphregion(fcolor(white)) ysc(range(0 1)) ylabel(0 (0.2) 1) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Information revealed before evaluation") xtit
+> le("O{subscript:a}"))
+
+.         graph export  "${path_fig}fig3A.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig3A.pdf saved as PDF format
+
+. 
+.         
+.         
+. * Figure 3B - Access to info before evaluating by access to info while donating
+. cibar asso_shown_eval if treatment==6, over1(donation) over2(asso_shown) barcol(sienna st
+> one)  bargap(10) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(0 1)) ylabel(0 (0.2) 1) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Information revealed before evaluation"))
+
+.         graph export  "${path_fig}fig3B.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig3B.pdf saved as PDF format
+
+. ********************************************************************************  
+. 
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. * Figure 4A - Donations by actively observed vs. passively observed
+. reg donation i.treatment if treatment!=4 & info==0, robust // significant
+
+Linear regression                               Number of obs     =        947
+                                                F(2, 944)         =       2.99
+                                                Prob > F          =     0.0506
+                                                R-squared         =     0.0066
+                                                Root MSE          =     .42807
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+D{subscript:a}  |  -.0650691   .0345415    -1.88   0.060    -.1328562    .0027179
+O{subscript:a}  |  -.0822078   .0350484    -2.35   0.019    -.1509896   -.0134259
+                |
+          _cons |   .2922078   .0259545    11.26   0.000     .2412726     .343143
+---------------------------------------------------------------------------------
+
+. reg donation i.treatment if treatment!=4 & info==1, robust // no significance
+
+Linear regression                               Number of obs     =      1,003
+                                                F(2, 1000)        =       0.09
+                                                Prob > F          =     0.9168
+                                                R-squared         =     0.0002
+                                                Root MSE          =     .43883
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+D{subscript:a}  |   .0066742   .0344115     0.19   0.846    -.0608528    .0742011
+O{subscript:a}  |   .0138809   .0333171     0.42   0.677    -.0514985    .0792604
+                |
+          _cons |   .2522255   .0236927    10.65   0.000     .2057323    .2987187
+---------------------------------------------------------------------------------
+
+. reg donation ib(6).treatment if treatment!=4 & info==0, robust // no significance between
+>  Oa and Da
+
+Linear regression                               Number of obs     =        947
+                                                F(2, 944)         =       2.99
+                                                Prob > F          =     0.0506
+                                                R-squared         =     0.0066
+                                                Root MSE          =     .42807
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+D{subscript:p}  |   .0822078   .0350484     2.35   0.019     .0134259    .1509896
+D{subscript:a}  |   .0171386   .0327756     0.52   0.601    -.0471828    .0814601
+                |
+          _cons |        .21   .0235533     8.92   0.000     .1637771    .2562229
+---------------------------------------------------------------------------------
+
+. 
+.  
+. cibar donation if treatment!=4, over1(treatment) over2(info) barcol(olive_teal gs10 emidb
+> lue)  bargap(10) ///
+> graphopts(graphregion(fcolor(white)) ///
+> ysc(range(0 0.4)) ylabel(0 (0.05) 0.4) legend(cols(1) pos(5) ring(0) region(lcolor(black)
+> )) ytitle("Mean donation"))
+
+.         graph export  "${path_fig}fig4_byinfo.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig4_byinfo.pdf saved as PDF format
+
+.         
+. * Figure 4 - no info separate graph
+. reg donation i.treatment if treatment!=4 & info==0, robust // significant
+
+Linear regression                               Number of obs     =        947
+                                                F(2, 944)         =       2.99
+                                                Prob > F          =     0.0506
+                                                R-squared         =     0.0066
+                                                Root MSE          =     .42807
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+D{subscript:a}  |  -.0650691   .0345415    -1.88   0.060    -.1328562    .0027179
+O{subscript:a}  |  -.0822078   .0350484    -2.35   0.019    -.1509896   -.0134259
+                |
+          _cons |   .2922078   .0259545    11.26   0.000     .2412726     .343143
+---------------------------------------------------------------------------------
+
+. 
+. cibar donation if treatment!=4 & info==0, over1(treatment) barcol(olive_teal gs10 emidblu
+> e)  bargap(10) ///
+> graphopts(graphregion(fcolor(white)) ///
+> ysc(range(0 0.4)) ylabel(0 (0.05) 0.4) legend(cols(1) pos(5) ring(0) region(lcolor(black)
+> )) ytitle("Mean donation"))
+
+.         graph export  "${path_fig}fig4.pdf", replace    
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig4.pdf saved as PDF format
+
+.         
+. *ttesttable donation treatment if info==0, tex(figure5A_noinfo) pre("\begin{table}[!ht]\c
+> entering") post("\caption{Cross table of differences in mean by group\end{table}")
+.         
+.         
+.         
+. eststo clear
+
+.         
+. preserve
+
+. keep if inlist(treatment, 2, 3) & info == 0
+(1,936 observations deleted)
+
+. ttest donation, by(treatment)
+
+Two-sample t test with equal variances
+------------------------------------------------------------------------------
+   Group |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+D{subscr |     308    .2922078    .0259555    .4555174    .2411346     .343281
+D{subscr |     339    .2271386    .0227897    .4196023    .1823112    .2719661
+---------+--------------------------------------------------------------------
+Combined |     647    .2581144     .017217    .4379358    .2243063    .2919225
+---------+--------------------------------------------------------------------
+    diff |            .0650691    .0344051               -.0024904    .1326287
+------------------------------------------------------------------------------
+    diff = mean(D{subscr) - mean(D{subscr)                        t =   1.8913
+H0: diff = 0                                     Degrees of freedom =      645
+
+    Ha: diff < 0                 Ha: diff != 0                 Ha: diff > 0
+ Pr(T < t) = 0.9705         Pr(|T| > |t|) = 0.0590          Pr(T > t) = 0.0295
+
+. 
+. // Generate new variables from stored results
+. gen mean1 = r(mu_1)
+
+. gen mean2 = r(mu_2)
+
+. gen diff = r(mu_1) - r(mu_2)
+
+. gen pvalue = r(p)
+
+. 
+. // Use estpost to store these as estimation results
+. estpost tabstat mean1 mean2 diff pvalue, c(stat) stat(mean)
+
+Summary statistics: mean
+     for variables: mean1 mean2 diff pvalue
+
+             |   e(mean) 
+-------------+-----------
+       mean1 |  .2922078 
+       mean2 |  .2271386 
+        diff |  .0650691 
+      pvalue |  .0590369 
+
+. 
+. // Store results
+. eststo t23
+
+. restore
+
+.         
+.         
+. preserve
+
+. keep if inlist(treatment, 2, 6) & info == 0
+(1,975 observations deleted)
+
+. ttest donation, by(treatment)
+
+Two-sample t test with equal variances
+------------------------------------------------------------------------------
+   Group |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+D{subscr |     308    .2922078    .0259555    .4555174    .2411346     .343281
+O{subscr |     300         .21    .0235552    .4079888    .1636449    .2563551
+---------+--------------------------------------------------------------------
+Combined |     608    .2516447    .0176138    .4343154    .2170533    .2862362
+---------+--------------------------------------------------------------------
+    diff |            .0822078    .0351012                .0132729    .1511426
+------------------------------------------------------------------------------
+    diff = mean(D{subscr) - mean(O{subscr)                        t =   2.3420
+H0: diff = 0                                     Degrees of freedom =      606
+
+    Ha: diff < 0                 Ha: diff != 0                 Ha: diff > 0
+ Pr(T < t) = 0.9902         Pr(|T| > |t|) = 0.0195          Pr(T > t) = 0.0098
+
+. 
+. // Generate new variables from stored results
+. gen mean1 = r(mu_1)
+
+. gen mean2 = r(mu_2)
+
+. gen diff = r(mu_1) - r(mu_2)
+
+. gen pvalue = r(p)
+
+. 
+. // Use estpost to store these as estimation results
+. estpost tabstat mean1 mean2 diff pvalue, c(stat) stat(mean)
+
+Summary statistics: mean
+     for variables: mean1 mean2 diff pvalue
+
+             |   e(mean) 
+-------------+-----------
+       mean1 |  .2922078 
+       mean2 |       .21 
+        diff |  .0822078 
+      pvalue |  .0195026 
+
+. 
+. // Store results
+. eststo t26
+
+. restore
+
+. 
+. 
+. preserve
+
+. keep if inlist(treatment, 3, 6) & info == 0
+(1,944 observations deleted)
+
+. ttest donation, by(treatment)
+
+Two-sample t test with equal variances
+------------------------------------------------------------------------------
+   Group |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+D{subscr |     339    .2271386    .0227897    .4196023    .1823112    .2719661
+O{subscr |     300         .21    .0235552    .4079888    .1636449    .2563551
+---------+--------------------------------------------------------------------
+Combined |     639    .2190923    .0163758    .4139554    .1869353    .2512494
+---------+--------------------------------------------------------------------
+    diff |            .0171386    .0328315               -.0473325    .0816098
+------------------------------------------------------------------------------
+    diff = mean(D{subscr) - mean(O{subscr)                        t =   0.5220
+H0: diff = 0                                     Degrees of freedom =      637
+
+    Ha: diff < 0                 Ha: diff != 0                 Ha: diff > 0
+ Pr(T < t) = 0.6991         Pr(|T| > |t|) = 0.6018          Pr(T > t) = 0.3009
+
+. 
+. // Generate new variables from stored results
+. gen mean1 = r(mu_1)
+
+. gen mean2 = r(mu_2)
+
+. gen diff = r(mu_1) - r(mu_2)
+
+. gen pvalue = r(p)
+
+. 
+. // Use estpost to store these as estimation results
+. estpost tabstat mean1 mean2 diff pvalue, c(stat) stat(mean)
+
+Summary statistics: mean
+     for variables: mean1 mean2 diff pvalue
+
+             |   e(mean) 
+-------------+-----------
+       mean1 |  .2271386 
+       mean2 |       .21 
+        diff |  .0171386 
+      pvalue |  .6018395 
+
+. 
+. // Store results
+. eststo t36
+
+. restore
+
+.         
+. esttab t23 t26 t36 using `"${path_tab}figure5A_noinfo.tex"', replace booktabs label nonum
+> bers mtitle("$D_p$ - $D_a$" "$D_p$ - $O_a$" "$D_a$ - $O_a$") // problematic.
+(output written to /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/resul
+> ts/tables/figure5A_noinfo.tex)
+
+. 
+.         
+.         
+. * Figure 4B - Donations, Op vs. Da and Oa
+. preserve
+
+. replace donation = Gpred_donation if treatment == 4 & missing(donation)
+(633 real changes made)
+
+. 
+. reg donation i.treatment if treatment!=2 & info==0, robust // no significance
+
+Linear regression                               Number of obs     =        972
+                                                F(2, 969)         =       1.02
+                                                Prob > F          =     0.3605
+                                                R-squared         =     0.0021
+                                                Root MSE          =     .40521
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+O{subscript:p}  |  -.0439555   .0311474    -1.41   0.159    -.1050796    .0171687
+O{subscript:a}  |  -.0171386   .0327743    -0.52   0.601    -.0814553    .0471781
+                |
+          _cons |   .2271386   .0227912     9.97   0.000     .1824128    .2718645
+---------------------------------------------------------------------------------
+
+. reg donation i.treatment if treatment!=2 & info==1, robust // no significance
+
+Linear regression                               Number of obs     =        966
+                                                F(2, 963)         =       0.63
+                                                Prob > F          =     0.5338
+                                                R-squared         =     0.0013
+                                                Root MSE          =      .4349
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+O{subscript:p}  |  -.0288997   .0348575    -0.83   0.407    -.0973052    .0395058
+O{subscript:a}  |   .0072068   .0342289     0.21   0.833    -.0599652    .0743787
+                |
+          _cons |   .2588997   .0249575    10.37   0.000     .2099224     .307877
+---------------------------------------------------------------------------------
+
+. reg donation ib(6).treatment if treatment!=2 & info==0, robust // when base category is O
+> a - no significance
+
+Linear regression                               Number of obs     =        972
+                                                F(2, 969)         =       1.02
+                                                Prob > F          =     0.3605
+                                                R-squared         =     0.0021
+                                                Root MSE          =     .40521
+
+---------------------------------------------------------------------------------
+                |               Robust
+       donation | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      treatment |
+D{subscript:a}  |   .0171386   .0327743     0.52   0.601    -.0471781    .0814553
+O{subscript:p}  |  -.0268168   .0317086    -0.85   0.398    -.0890422    .0354086
+                |
+          _cons |        .21   .0235523     8.92   0.000     .1637806    .2562194
+---------------------------------------------------------------------------------
+
+.  
+. 
+. cibar donation if treatment!=2, over1(treatment) over2(info) barcol(gs10 eltblue emidblue
+> )  bargap(10) ///
+> graphopts(graphregion(fcolor(white)) ///
+> ysc(range(0 0.4)) ylabel(0 (0.05) 0.4) legend(cols(1) pos(5) ring(0) region(lcolor(black)
+> )) ytitle("Mean donation"))
+
+.         graph export  "${path_fig}figure5B.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/figure5B.pdf saved as PDF format
+
+. 
+. restore
+
+. ********************************************************************************
+. 
+. 
+. 
+. ********************************************************************************
+. * Figure 5 - average expectations
+. table treatment info, statistic(mean expected_evaluation) 
+
+---------------------------------------------------------------------------------
+                 |                               info                            
+                 |  No option to see the ARUP   Option to see the ARUP      Total
+-----------------+---------------------------------------------------------------
+treatment        |                                                               
+  D{subscript:p} |                   3.269383                 3.158368    3.21138
+  D{subscript:a} |                   3.184779                 3.238641   3.210463
+  O{subscript:p} |                    3.54967                 3.628767   3.587156
+  O{subscript:a} |                     3.6968                 3.655182   3.674186
+  Total          |                    3.42007                 3.421827   3.420956
+---------------------------------------------------------------------------------
+
+. 
+. cibar expected_evaluation if treatment<4, over1(treatment) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(1 5)) ylabel(1 (1) 5) legend(cols(1) pos(1
+> 1) ring(0) region(lcolor(black))) ytitle("Mean expected evaluation"))
+
+.  graph save "${path_fig}fig5A_1.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/fig
+> 5A_1.gph saved
+
+.  
+. cibar expected_evaluation if treatment<4, over1(treatment) over2(info) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(1 5)) ylabel(1 (1) 5) legend(cols(1) pos(1
+> 1) ring(0) region(lcolor(black))) ytitle("Mean expected evaluation")) 
+
+. graph save "${path_fig}fig5A_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/fig
+> 5A_2.gph saved
+
+.  
+.  graph combine  "${path_fig}fig5A_1.gph" "${path_fig}fig5A_2.gph", graphregion(color(whit
+> e)) ycommon /*title("Panel C.2 - Gaussian NB (0.676 accuracy), info treatment", size(medl
+> arge))*/ graphregion(margin(zero))            
+
+.    graph export  "${path_fig}fig5_exp_eval.pdf", replace  
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig5_exp_eval.pdf saved as PDF format
+
+.    
+. ********************************************************************************
+. 
+. cibar expected_evaluation if treatment<4, over1(treatment) over2(donation) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(1 5)) ylabel(1 (1) 5) legend(cols(1) pos(1
+> 1) ring(0) region(lcolor(black))) ytitle("Mean expected evaluation"))
+
+.  graph save "${path_fig}fig5B_1.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/fig
+> 5B_1.gph saved
+
+.  
+. cibar expected_evaluation if treatment<4, over1(treatment) over2(donation) over3(info) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(1 5)) ylabel(1 (1) 5) legend(cols(1) pos(1
+> 1) ring(0) region(lcolor(black))) ytitle("Mean expected evaluation")) 
+
+. graph save "${path_fig}fig5B_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/fig
+> 5B_2.gph saved
+
+.  
+.  graph combine  "${path_fig}fig5B_1.gph" "${path_fig}fig5B_2.gph", graphregion(color(whit
+> e)) ycommon /*title("Panel C.2 - Gaussian NB (0.676 accuracy), info treatment", size(medl
+> arge))*/ graphregion(margin(zero))            
+
+.    graph export  "${path_fig}fig5_exp_eval_donation.pdf", replace  
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/fig5_exp_eval_donation.pdf saved as PDF
+    format
+
+. ********************************************************************************
+. 
+. 
+. 
+. 
+. ********************************************************************************
+. * Figure 6 - Emeric - Info revealed
+. 
+. cibar asso_shown_combined if treatment==6, over1(donation)  barcol()  bargap(10) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(0 1)) ylabel(0 (0.2) 1) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Information revealed overall") xtitle("O{subs
+> cript:a}"))
+
+.         graph export  "${path_fig}figure6A.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/figure6A.pdf saved as PDF format
+
+.         
+. cibar asso_shown_eval if treatment==4, over1(Gpred_donation_allwithnoinfo)  barcol()  bar
+> gap(10) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(0 1)) ylabel(0 (0.2) 1) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Information revealed while evaluating") xtitl
+> e("O{subscript:p}"))
+
+.         graph export  "${path_fig}figure6B.pdf", replace
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/figure6B.pdf saved as PDF format
+
+.         
+. ********************************************************************************
+.         
+.         
+.         
+.         
+.         
+. ********************************************************************************        
+. * Request - $O_a$ real vs predicted comparison
+. * without INFO
+. cibar evaluation if treatment==6 & info==0, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_r_l.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_r_l.gph saved
+
+.  
+. cibar evaluation if treatment==6 & info==0, over1(Gpred_donation) over2(choice_judged_oth
+> er) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: Ga
+> ussian NB pred share")) 
+
+. graph save "${path_fig}predicted_r_1.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_r_1.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_r_l.gph" "${path_fig}predicted_r_1.gph", graphregion(c
+> olor(white)) ycommon title("Panel R.1 - Gaussian NB, no info treatment", size(medlarge)) 
+> graphregion(margin(zero))             
+
+.    graph export  "${path_fig}requestR1.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/requestR1.pdf saved as PDF format
+
+. 
+. * with INFO
+. cibar evaluation if treatment==6 & info==1, over1(donation) over2(choice_judged_other) //
+> /
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_r_2.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_r_2.gph saved
+
+.  
+. cibar evaluation if treatment==6 & info==1, over1(Gpred_donation) over2(choice_judged_oth
+> er) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: Ga
+> ussian NB pred share")) 
+
+. graph save "${path_fig}predicted_r_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_r_2.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_r_2.gph" "${path_fig}predicted_r_2.gph", graphregion(c
+> olor(white)) ycommon title("Panel R.2 - Gaussian NB, info treatment", size(medlarge)) gra
+> phregion(margin(zero))                
+
+.    graph export  "${path_fig}requestR2.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/requestR2.pdf saved as PDF format
+
+.    
+. 
+. * irrespective of INFO - based on info training
+. cibar evaluation if treatment==6, over1(donation) over2(choice_judged_other) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: re
+> al share"))
+
+.  graph save "${path_fig}actual_r_2.gph", replace
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/act
+> ual_r_2.gph saved
+
+.  
+. cibar evaluation if treatment==6, over1(Gpred_donation_allwithinfo) over2(choice_judged_o
+> ther) ///
+> graphopts(graphregion(fcolor(white)) ysc(range(3 5)) ylabel(3 (0.5) 5) legend(cols(1) pos
+> (11) ring(0) region(lcolor(black))) ytitle("Mean evaluation") title("Active observers: Ga
+> ussian NB pred share")) 
+
+. graph save "${path_fig}predicted_r_2.gph", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and reminders/ExpeData/CLEAN/results/figures/pre
+> dicted_r_2.gph saved
+
+.  
+.  graph combine  "${path_fig}actual_r_2.gph" "${path_fig}predicted_r_2.gph", graphregion(c
+> olor(white)) ycommon title("Panel R.3 - Gaussian NB, all participants / based on the info
+>  model", size(medlarge)) graphregion(margin(zero))            
+
+.    graph export  "${path_fig}requestR3.pdf", replace 
+file /Users/roberto.galbiati/Dropbox/Norms and
+    reminders/ExpeData/CLEAN/results/figures/requestR3.pdf saved as PDF format
+
+. 
+. 
+. //  cibar donation if treatment==2 | treatment==6, over(treatment) barcol(olive_teal gs10
+>  eltgreen )  ///
+. // graphopts(graphregion(fcolor(white) ) text( .37 1.6  "`=ustrunescape("\u23AB")'" "`=us
+> trunescape("\u23AA")'"  "`=ustrunescape("\u23AA")'"    "`=ustrunescape("\u23AC")'" "`=ust
+> runescape("\u23AA")'" "`=ustrunescape("\u23AA")'"   "`=ustrunescape("\u23AD")'" , /// 
+. // size(vhuge) orientation(vertical))  text(0.39 1.6 "**", size(big)) ysc(range(0 0.4)) y
+> label(0 (0.05) 0.4) legend(cols(1) pos(4) ring(0) region(lcolor(black))) ytitle("Mean don
+> ation"))  bargap(10)
+.   
+. 
+end of do-file

@@ -1,0 +1,37 @@
+\begin{table}[htbp]\centering
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\caption{Regression Results}
+\begin{tabular}{l*{2}{c}}
+\hline\hline
+                    &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}\\
+                    &\multicolumn{1}{c}{evaluation}&\multicolumn{1}{c}{evaluation}\\
+                    &        b/se   &        b/se   \\
+\hline
+dummy\_oa            &      -0.093   &       0.175   \\
+                    &     (0.110)   &     (0.230)   \\
+obskeep             &      -0.988***&      -1.097***\\
+                    &     (0.117)   &     (0.216)   \\
+dummy\_oa=0          &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+dummy\_oa=1          &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+obskeep=0           &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+obskeep=1           &       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+dummy\_oa=0 $\times$ obskeep=0&       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+dummy\_oa=0 $\times$ obskeep=1&       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+dummy\_oa=1 $\times$ obskeep=0&       0.000   &       0.000   \\
+                    &         (.)   &         (.)   \\
+dummy\_oa=1 $\times$ obskeep=1&       0.495***&      -0.097   \\
+                    &     (0.155)   &     (0.334)   \\
+Constant            &       4.643***&       4.714***\\
+                    &     (0.083)   &     (0.152)   \\
+\hline
+Observations        &         538   &         119   \\
+Adjusted \(R^{2}\)  &       0.152   &       0.279   \\
+\hline\hline
+\end{tabular}
+\end{table}

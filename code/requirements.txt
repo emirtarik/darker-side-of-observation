@@ -1,0 +1,6 @@
+pandas
+seaborn
+matplotlib
+nbformat
+nbconvert
+scikit-learn
